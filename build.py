@@ -19,7 +19,9 @@ def build():
         "pyinstaller",
         "--noconfirm",
         "--windowed", # no console
-        "--name", "RL Forge",
+        "--onefile",  # single executable
+        "--name", "RLForge",
+        "--icon", "data/icon.ico",
         
         # Add CustomTkinter library files
         f"--add-data={ctk_path};customtkinter/",

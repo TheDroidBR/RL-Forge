@@ -521,6 +521,13 @@ class RLSwapperApp(ctk.CTk):
         self.minsize(900, 600)
         self.configure(fg_color=BG)
         self.resizable(True, True)
+        
+        try:
+            icon_path = get_base_dir() / "data" / "icon.ico"
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except Exception as e:
+            print(f"Icon warning: {e}")
 
         self.cfg = load_config()
         self.products = []

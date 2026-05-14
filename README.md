@@ -1,4 +1,5 @@
 <h1 align="center">
+  <img src="assets/logo.png" alt="RL Forge Logo" width="128"><br>
   🚀 RL Forge
 </h1>
 
