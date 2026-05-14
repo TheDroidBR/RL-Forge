@@ -278,7 +278,7 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
         cursor = entry_end
 
     if not found:
-        raise ValueError(f"Nome '{find}' nao encontrado na name table do UPK.")
+        return data
 
     old_fstring_len = _read_i32(ba, entry_start)
     old_fstring_end = entry_start + 4 + old_fstring_len

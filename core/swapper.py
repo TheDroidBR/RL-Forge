@@ -288,7 +288,6 @@ def swap(
                 # 2. {Name}_{Suffix}
                 # We replace the base name with the painted version BEFORE swapping it to the original name
                 data = patch_names(data, target_name, f"{target_name}_Painted_{suffix}")
-                data = patch_names(data, f"{target_name}_SF", f"{target_name}_Painted_{suffix}_SF")
 
         # Now do the main swap to the original item's identity
         data = patch_names(data, target_name, orig_name)
