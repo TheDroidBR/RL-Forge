@@ -14,7 +14,7 @@
 
 ## 📖 About
 
-RL Forge is a native Windows desktop application built to simplify local cosmetic modding in Rocket League. It replaces local item models with the ones you want without the need for complex command-line tools. 
+**Developed by [TheDroid](https://github.com/TheDroidBR)**, RL Forge is a native Windows desktop application built to simplify local cosmetic modding in Rocket League. It replaces local item models with the ones you want without the need for complex command-line tools. 
 
 RL Forge uses a completely custom dark-mode GUI built in Python, while securely using the community-trusted `RLUPKTool` engine under the hood to ensure game stability.
 

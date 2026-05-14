@@ -1,6 +1,7 @@
 # Créditos e Agradecimentos
 
-O **RL Forge** foi desenvolvido com amor para a comunidade de modding do Rocket League. 
+O **RL Forge** foi desenvolvido por **TheDroid** com amor para a comunidade de modding do Rocket League. 
+
 Embora o motor do aplicativo e a interface tenham sido escritos do zero em Python (sob a Licença GNU GPL v3.0), o ecossistema depende de ferramentas e dados essenciais criados por terceiros.
 
 Gostaríamos de agradecer e dar os devidos créditos aos seguintes criadores e projetos:

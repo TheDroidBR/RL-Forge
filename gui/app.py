@@ -966,10 +966,11 @@ class RLSwapperApp(ctk.CTk):
         frame = ctk.CTkFrame(popup, fg_color=CARD)
         frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
-        txt = ("Este projeto só é possível graças à comunidade de modding:\n\n"
+        txt = ("Desenvolvido por **TheDroid** com amor para a comunidade.\n\n"
+               "Este projeto só é possível graças à comunidade de modding:\n\n"
                "• ShinyEmii (Toga-Files): Banco de dados de itens e chaves AES.\n"
                "• AltimorTASDK (RLUPKTool): Motor de descriptografia (MIT License).\n\n"
-               "O código-fonte do RL Forge é aberto e livre sob a GNU GPL v3.0. Obrigado por usar!")
+               "O código-fonte do RL Forge é aberto e livre sob a GNU GPL v3.0.")
                
         msg = ctk.CTkLabel(frame, text=txt, font=ctk.CTkFont("Segoe UI", 13), text_color=TEXT, justify="left", wraplength=400)
         msg.pack(padx=20, pady=20, fill="both", expand=True)
