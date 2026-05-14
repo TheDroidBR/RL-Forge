@@ -218,8 +218,8 @@ def swap(
     orig_aes    = orig.get("AES", "").strip() or None
     target_aes  = target.get("AES", "").strip() or None
 
-    if orig_name == target_name:
-        raise ValueError("Item original e alvo são o mesmo.")
+    if orig_name == target_name and (not target_color or target_color == "Unpainted"):
+        raise ValueError("Item original e alvo são o mesmo e nenhuma pintura foi selecionada.")
 
     pkg_path     = Path(pkg_dir)
     target_file  = pkg_path / f"{target_name}_SF.upk"

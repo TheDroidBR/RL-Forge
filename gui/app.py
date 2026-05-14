@@ -394,7 +394,22 @@ class ItemPicker(ctk.CTkFrame):
             # Universal color selected
             if self.selected_item:
                 base = get_base_label(self.selected_item.get("Label", ""))
+                
+                # SMART MODE: If a real variant with this color exists in CSV, switch to it!
+                if item_or_color != "Unpainted":
+                    variants = get_color_variants(self.products_all, self.selected_item)
+                    for v in variants:
+                        if get_item_color(v.get("Label", "")) == item_or_color:
+                            self.selected_item = v
+                            break
+
                 if item_or_color == "Unpainted":
+                    # Try to revert to unpainted base if we are on a painted variant
+                    variants = get_color_variants(self.products_all, self.selected_item)
+                    for v in variants:
+                        if get_item_color(v.get("Label", "")) is None:
+                            self.selected_item = v
+                            break
                     self.sel_label.configure(text=base, text_color=ACCENT)
                 else:
                     self.sel_label.configure(text=f"{base} · {item_or_color}", text_color=ACCENT)
