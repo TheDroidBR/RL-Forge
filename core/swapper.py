@@ -99,6 +99,24 @@ RL_PAINT_COLORS: dict[str, str] = {
     "Unpainted":      "#555577",
 }
 
+# Internal suffixes used by Rocket League for name-table painting
+PAINT_INTERNAL_NAMES: dict[str, str] = {
+    "Titanium White": "TW",
+    "Black":          "Black",
+    "Crimson":        "Crimson",
+    "Cobalt":         "Cobalt",
+    "Sky Blue":       "SkyBlue",
+    "Burnt Sienna":   "BurntSienna",
+    "Saffron":        "Saffron",
+    "Lime":           "Lime",
+    "Forest Green":   "ForestGreen",
+    "Orange":         "Orange",
+    "Purple":         "Purple",
+    "Pink":           "Pink",
+    "Gray":           "Grey",
+    "Grey":           "Grey",
+}
+
 # Sorted longest-first so "Sky Blue" matches before "Blue"
 _PAINT_SUFFIXES = sorted(RL_PAINT_COLORS.keys(), key=len, reverse=True)
 
@@ -258,9 +276,29 @@ def swap(
         if log_cb: log_cb(f"[2/4] Alterando name table: {target_name} -> {orig_name}...")
         with open(decrypted_path, "rb") as f:
             data = f.read()
-        patched = patch_names(data, target_name, orig_name)
+        
+        # ── Magic Paint Injection ──
+        # If a color is selected, we try to patch the name table to 'force' the paint
+        if target_color and target_color != "Unpainted":
+            suffix = PAINT_INTERNAL_NAMES.get(target_color)
+            if suffix:
+                if log_cb: log_cb(f"🎨 Aplicando técnica de pintura: {target_color} ({suffix})")
+                # Common patterns for painted items in name table
+                # 1. {Name}_Painted_{Suffix}
+                # 2. {Name}_{Suffix}
+                # We replace the base name with the painted version BEFORE swapping it to the original name
+                data = patch_names(data, target_name, f"{target_name}_Painted_{suffix}")
+                data = patch_names(data, f"{target_name}_SF", f"{target_name}_Painted_{suffix}_SF")
+
+        # Now do the main swap to the original item's identity
+        data = patch_names(data, target_name, orig_name)
+        # Also patch with the paint suffix in case it was already there or we just added it
+        if target_color and target_color != "Unpainted":
+            suffix = PAINT_INTERNAL_NAMES.get(target_color)
+            data = patch_names(data, f"{target_name}_Painted_{suffix}", orig_name)
+
         with open(patched_path, "wb") as f:
-            f.write(patched)
+            f.write(data)
 
         if log_cb: log_cb(f"[3/4] Re-criptografando...")
         encrypt_upk(str(patched_path), orig_aes, str(reenc_path))
