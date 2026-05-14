@@ -585,7 +585,7 @@ class RLSwapperApp(ctk.CTk):
         if messagebox.askyesno("Atualização Disponível", 
                                f"Uma nova versão (v{new_version}) do RL Forge está disponível!\n\n"
                                "Deseja atualizar agora automaticamente?"):
-            self._start_native_update(zip_url)
+            self._start_native_update(exe_url)
 
     def _start_native_update(self, url):
         popup = ctk.CTkToplevel(self)
