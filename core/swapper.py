@@ -100,21 +100,21 @@ RL_PAINT_COLORS: dict[str, str] = {
 }
 
 # Internal suffixes used by Rocket League for name-table painting
-PAINT_INTERNAL_NAMES: dict[str, str] = {
-    "Titanium White": "TW",
-    "Black":          "Black",
-    "Crimson":        "Crimson",
-    "Cobalt":         "Cobalt",
-    "Sky Blue":       "SkyBlue",
-    "Burnt Sienna":   "BurntSienna",
-    "Saffron":        "Saffron",
-    "Lime":           "Lime",
-    "Forest Green":   "ForestGreen",
-    "Orange":         "Orange",
-    "Purple":         "Purple",
-    "Pink":           "Pink",
-    "Gray":           "Grey",
-    "Grey":           "Grey",
+PAINT_INTERNAL_NAMES: dict[str, list[str]] = {
+    "Titanium White": ["TW", "TitaniumWhite", "White"],
+    "Black":          ["Black"],
+    "Crimson":        ["Crimson"],
+    "Cobalt":         ["Cobalt"],
+    "Sky Blue":       ["SkyBlue"],
+    "Burnt Sienna":   ["BurntSienna", "BS"],
+    "Saffron":        ["Saffron"],
+    "Lime":           ["Lime"],
+    "Forest Green":   ["ForestGreen", "FG"],
+    "Orange":         ["Orange"],
+    "Purple":         ["Purple"],
+    "Pink":           ["Pink"],
+    "Gray":           ["Grey", "Gray"],
+    "Grey":           ["Grey", "Gray"],
 }
 
 # Sorted longest-first so "Sky Blue" matches before "Blue"
@@ -215,7 +215,6 @@ def swap(
     target: dict,
     pkg_dir: str,
     log_cb=None,
-    target_color: str = "Unpainted"
 ) -> None:
     """
     Swap target package to look like orig (locally, client-side only).
@@ -236,8 +235,8 @@ def swap(
     orig_aes    = orig.get("AES", "").strip() or None
     target_aes  = target.get("AES", "").strip() or None
 
-    if orig_name == target_name and (not target_color or target_color == "Unpainted"):
-        raise ValueError("Item original e alvo são o mesmo e nenhuma pintura foi selecionada.")
+    if orig_name == target_name:
+        raise ValueError("Item original e alvo são o mesmo.")
 
     pkg_path     = Path(pkg_dir)
     target_file  = pkg_path / f"{target_name}_SF.upk"
@@ -266,38 +265,18 @@ def swap(
         patched_path   = tmp / f"{orig_name}_SF_decrypted.upk"   # must end in _decrypted.upk!
         reenc_path     = tmp / f"{orig_name}_SF.upk"
 
-        if log_cb: 
-            msg = f"[1/4] Descriptografando {target_file.name}"
-            if target_color and target_color != "Unpainted":
-                msg += f" (Pintura: {target_color})"
-            log_cb(f"{msg}...")
+        if log_cb: log_cb(f"[1/4] Descriptografando {target_file.name}...")
         decrypt_upk(str(target_file), target_aes, str(decrypted_path))
 
         if log_cb: log_cb(f"[2/4] Alterando name table: {target_name} -> {orig_name}...")
         with open(decrypted_path, "rb") as f:
             data = f.read()
         
-        # ── Magic Paint Injection ──
-        # If a color is selected, we try to patch the name table to 'force' the paint
-        if target_color and target_color != "Unpainted":
-            suffix = PAINT_INTERNAL_NAMES.get(target_color)
-            if suffix:
-                if log_cb: log_cb(f"🎨 Aplicando técnica de pintura: {target_color} ({suffix})")
-                # Common patterns for painted items in name table
-                # 1. {Name}_Painted_{Suffix}
-                # 2. {Name}_{Suffix}
-                # We replace the base name with the painted version BEFORE swapping it to the original name
-                data = patch_names(data, target_name, f"{target_name}_Painted_{suffix}")
-
-        # Now do the main swap to the original item's identity
-        data = patch_names(data, target_name, orig_name)
-        # Also patch with the paint suffix in case it was already there or we just added it
-        if target_color and target_color != "Unpainted":
-            suffix = PAINT_INTERNAL_NAMES.get(target_color)
-            data = patch_names(data, f"{target_name}_Painted_{suffix}", orig_name)
-
+        # Main swap to the original item's identity
+        patched = patch_names(data, target_name, orig_name)
+        
         with open(patched_path, "wb") as f:
-            f.write(data)
+            f.write(patched)
 
         if log_cb: log_cb(f"[3/4] Re-criptografando...")
         encrypt_upk(str(patched_path), orig_aes, str(reenc_path))

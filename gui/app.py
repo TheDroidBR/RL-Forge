@@ -163,24 +163,17 @@ class ItemCard(ctk.CTkFrame):
 
 class ColorVariantBar(ctk.CTkFrame):
     """Horizontal row of paint color dots for variant selection."""
-    def __init__(self, master, is_target=False, **kwargs):
+    def __init__(self, master, **kwargs):
         super().__init__(master, fg_color=CARD, corner_radius=8, **kwargs)
-        self.is_target = is_target
         self._buttons: list[ctk.CTkButton] = []
         self._active: ctk.CTkButton | None = None
-        self.selected_color = "Unpainted"
 
     def load(self, variants: list[dict], current_item: dict, on_select):
-        """Loads variants from CSV if available, otherwise shows universal colors for target."""
+        """Loads color variant dots from item list."""
         for w in self.winfo_children():
             w.destroy()
         self._buttons.clear()
         self._active = None
-
-        # If it's the target side, we ALWAYS show the 13 colors as a 'paint override'
-        if self.is_target:
-            self._load_universal(on_select)
-            return
 
         if len(variants) <= 1:
             self.pack_forget()
@@ -192,7 +185,6 @@ class ColorVariantBar(ctk.CTkFrame):
         for v in variants:
             color_name = get_item_color(v.get("Label", ""))
             hex_color  = RL_PAINT_COLORS.get(color_name, "#555577") if color_name else "#aaaaaa"
-            
             is_current = v["Name"] == current_item["Name"]
 
             btn = ctk.CTkButton(
@@ -212,36 +204,7 @@ class ColorVariantBar(ctk.CTkFrame):
 
         self.pack(fill="x", padx=12, pady=(0, 6))
 
-    def _load_universal(self, on_select):
-        ctk.CTkLabel(self, text="Pintura:", text_color=MUTED,
-                     font=ctk.CTkFont("Segoe UI", 11)).pack(side="left", padx=(10, 6), pady=6)
-        
-        for name, hex_c in RL_PAINT_COLORS.items():
-            is_active = name == self.selected_color
-            btn = ctk.CTkButton(
-                self, text="", width=18, height=18,
-                corner_radius=9,
-                fg_color=hex_c,
-                hover_color=hex_c,
-                border_width=2 if is_active else 0,
-                border_color=ACCENT if is_active else hex_c,
-                command=lambda n=name: self._select_universal(n, on_select)
-            )
-            btn.pack(side="left", padx=2, pady=6)
-            btn._color_name = name
-            if is_active: self._active = btn
-            self._buttons.append(btn)
-        
-        self.pack(fill="x", padx=12, pady=(0, 6))
-
-    def _select_universal(self, color_name, on_select):
-        self.selected_color = color_name
-        for btn in self._buttons:
-            btn.configure(border_width=2 if btn._color_name == color_name else 0)
-        on_select(color_name)
-
     def mark_active(self, item: dict):
-        if self.is_target: return
         for btn in self._buttons:
             is_active = getattr(btn, "_variant", {}).get("Name") == item["Name"]
             btn.configure(border_width=2 if is_active else 0)
@@ -292,7 +255,7 @@ class ItemPicker(ctk.CTkFrame):
         self.slot_menu.pack(fill="x", padx=12, pady=(0, 6))
 
         # Color variant bar (hidden until an item with variants is selected)
-        self.color_bar = ColorVariantBar(self, is_target=is_target)
+        self.color_bar = ColorVariantBar(self)
 
         # Scrollable card list
         self.scroll = ctk.CTkScrollableFrame(self, fg_color="transparent",
@@ -387,35 +350,11 @@ class ItemPicker(ctk.CTkFrame):
             self.on_change_cb()
 
     def _on_color_select(self, item_or_color):
-        """Called when user clicks a color dot."""
+        """Called when user clicks a color variant dot."""
         if isinstance(item_or_color, dict):
             self.select_item(item_or_color)
-        else:
-            # Universal color selected
-            if self.selected_item:
-                base = get_base_label(self.selected_item.get("Label", ""))
-                
-                # SMART MODE: If a real variant with this color exists in CSV, switch to it!
-                if item_or_color != "Unpainted":
-                    variants = get_color_variants(self.products_all, self.selected_item)
-                    for v in variants:
-                        if get_item_color(v.get("Label", "")) == item_or_color:
-                            self.selected_item = v
-                            break
-
-                if item_or_color == "Unpainted":
-                    # Try to revert to unpainted base if we are on a painted variant
-                    variants = get_color_variants(self.products_all, self.selected_item)
-                    for v in variants:
-                        if get_item_color(v.get("Label", "")) is None:
-                            self.selected_item = v
-                            break
-                    self.sel_label.configure(text=base, text_color=ACCENT)
-                else:
-                    self.sel_label.configure(text=f"{base} · {item_or_color}", text_color=ACCENT)
-        
-        if self.on_change_cb:
-            self.on_change_cb()
+            if self.on_change_cb:
+                self.on_change_cb()
 
 
 class BackupsPanel(ctk.CTkFrame):
@@ -944,11 +883,9 @@ class RLSwapperApp(ctk.CTk):
         self.progress_bar.set(0)
         self.progress_bar.pack(pady=4)
 
-        target_color = self.target_picker.color_bar.selected_color if self.target_picker.color_bar.is_target else "Unpainted"
-
         def run():
             try:
-                swap(orig, target, pkg, self._log, target_color)
+                swap(orig, target, pkg, self._log)
                 self.after(0, lambda: self.backups_panel.refresh())
                 self.after(0, lambda: self.swap_btn.configure(
                     state="normal", text="⚡ SWAP"))
