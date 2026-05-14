@@ -234,8 +234,11 @@ def swap(
     # ── Step 1: Backup ──────────────────────────────────────────────────────
     backup_dir.mkdir(parents=True, exist_ok=True)
     backup_path = backup_dir / f"{orig_name}_SF.upk"
-    shutil.copy2(orig_file, backup_path)
-    if log_cb: log_cb(f"[backup] Salvo: {backup_path.name}")
+    if not backup_path.exists():
+        shutil.copy2(orig_file, backup_path)
+        if log_cb: log_cb(f"[backup] Original salvo: {backup_path.name}")
+    else:
+        if log_cb: log_cb(f"[info] Usando backup original já existente.")
 
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
