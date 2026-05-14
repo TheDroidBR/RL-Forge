@@ -24,28 +24,33 @@ def get_machine_id():
 
 def send_ping(uid):
     """Sends a heartbeat to the Solari metrics server."""
+    url = f"{METRICS_URL}?action=ping&version={APP_VERSION}&uid={uid}&bd=rl_forge_client"
     try:
-        params = {
-            "action": "ping",
-            "version": APP_VERSION,
-            "uid": uid,
-            "bd": "rl_forge_client" # Identifier for the admin dashboard
-        }
-        # Using a small timeout to not hang the app
-        requests.get(METRICS_URL, params=params, timeout=10)
-    except:
-        pass
+        # Try requests first as it's cleaner
+        requests.get(url, timeout=10, verify=False, headers={"User-Agent": "RLForge-Client"})
+    except Exception:
+        try:
+            # Fallback to urllib.request (builtin)
+            import urllib.request
+            req = urllib.request.Request(url, headers={"User-Agent": "RLForge-Client"})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                response.read()
+        except:
+            pass
 
 def send_increment():
     """Signals that a new unique user has started the app."""
+    url = f"{METRICS_URL}?action=increment&item={APP_ITEM_ID}"
     try:
-        params = {
-            "action": "increment",
-            "item": APP_ITEM_ID
-        }
-        requests.get(METRICS_URL, params=params, timeout=10)
-    except:
-        pass
+        requests.get(url, timeout=10, verify=False, headers={"User-Agent": "RLForge-Client"})
+    except Exception:
+        try:
+            import urllib.request
+            req = urllib.request.Request(url, headers={"User-Agent": "RLForge-Client"})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                response.read()
+        except:
+            pass
 
 def _metrics_loop(uid):
     """Background loop for heartbeats."""
