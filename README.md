@@ -48,6 +48,13 @@ This project is made possible thanks to the open-source modding community:
 * **[ShinyEmii (Toga)](https://github.com/ShinyEmii/Toga-Files):** Providing the incredibly maintained database of item IDs, packages, and AES keys.
 * **[AltimorTASDK](https://github.com/AltimorTASDK/RLUPKTool):** For creating the `RLUPKTool` engine that powers the safe UPK decryption/encryption.
 
+## 🔒 Privacy & Metrics
+
+To help improve the software and track adoption, RL Forge collects anonymous usage metrics:
+- **Unique Users:** An anonymous hash based on your machine ID to count total installations.
+- **Active Users:** A periodic heartbeat while the app is open to track concurrent users.
+- **No Personal Data:** We do not collect names, emails, IPs (beyond standard web request logs), or any game-sensitive data.
+
 ## ⚖️ Disclaimer & License
 
 *RL Forge is an open-source project distributed under the **GNU GPL v3.0 License**.*

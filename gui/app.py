@@ -21,6 +21,7 @@ from core.swapper import (
 )
 from core.updater import start_update_thread
 from core.utils import get_base_dir, get_data_dir
+from core.metrics import start_metrics
 
 # Cache for item thumbnails to prevent disk thrashing
 IMAGE_CACHE = {}
@@ -540,6 +541,7 @@ class RLSwapperApp(ctk.CTk):
         self._build_ui()
         self._load_data_async()
         self._check_updates()
+        start_metrics()
 
     def _check_updates(self):
         def run():
