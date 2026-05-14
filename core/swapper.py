@@ -197,6 +197,7 @@ def swap(
     target: dict,
     pkg_dir: str,
     log_cb=None,
+    target_color: str = "Unpainted"
 ) -> None:
     """
     Swap target package to look like orig (locally, client-side only).
@@ -244,7 +245,11 @@ def swap(
         patched_path   = tmp / f"{orig_name}_SF_decrypted.upk"   # must end in _decrypted.upk!
         reenc_path     = tmp / f"{orig_name}_SF.upk"
 
-        if log_cb: log_cb(f"[1/4] Descriptografando {target_file.name}...")
+        if log_cb: 
+            msg = f"[1/4] Descriptografando {target_file.name}"
+            if target_color and target_color != "Unpainted":
+                msg += f" (Pintura: {target_color})"
+            log_cb(f"{msg}...")
         decrypt_upk(str(target_file), target_aes, str(decrypted_path))
 
         if log_cb: log_cb(f"[2/4] Alterando name table: {target_name} -> {orig_name}...")
