@@ -28,8 +28,8 @@ RL Forge uses a completely custom dark-mode GUI built in Python, while securely 
 ## 📥 Installation & Usage
 
 1. Go to the **[Releases](https://github.com/TheDroidBR/RL-Forge/releases/latest)** tab.
-2. Download the latest `RL Forge.zip` (or `.exe` folder).
-3. Extract it and run `RL Forge.exe`.
+2. Download the latest `RLForge.exe`.
+3. Put the `.exe` anywhere on your computer (like your Desktop) and run it.
 4. Point the app to your Rocket League `CookedPCConsole` folder (the app usually auto-detects it).
 5. Select the item you have, the item you want, and click **⚡ SWAP**.
 

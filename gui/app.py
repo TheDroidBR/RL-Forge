@@ -546,38 +546,38 @@ class RLSwapperApp(ctk.CTk):
                     data = res.json()
                     latest_ver = data.get("tag_name", "").replace("v", "")
                     if latest_ver and latest_ver != APP_VERSION:
-                        # Find ZIP asset
+                        # Find EXE asset
                         assets = data.get("assets", [])
-                        zip_url = None
+                        exe_url = None
                         for asset in assets:
-                            if asset.get("name", "").endswith(".zip"):
-                                zip_url = asset.get("browser_download_url")
+                            if asset.get("name", "").endswith(".exe"):
+                                exe_url = asset.get("browser_download_url")
                                 break
                                 
                         try:
                             cur_parts = [int(x) for x in APP_VERSION.split(".")]
                             new_parts = [int(x) for x in latest_ver.split(".")]
                             if new_parts > cur_parts:
-                                self.after(0, lambda: self._show_update_button(latest_ver, zip_url, data.get("html_url")))
+                                self.after(0, lambda: self._show_update_button(latest_ver, exe_url, data.get("html_url")))
                         except Exception:
                             if latest_ver > APP_VERSION:
-                                self.after(0, lambda: self._show_update_button(latest_ver, zip_url, data.get("html_url")))
+                                self.after(0, lambda: self._show_update_button(latest_ver, exe_url, data.get("html_url")))
             except Exception as e:
                 print(f"Update check failed: {e}")
                 pass
                 
         threading.Thread(target=run, daemon=True).start()
 
-    def _show_update_button(self, new_version, zip_url, html_url):
+    def _show_update_button(self, new_version, exe_url, html_url):
         self.btn_update.configure(
             text=f"🟢 Atualizar (v{new_version})",
-            command=lambda: self._show_update_dialog(new_version, zip_url, html_url)
+            command=lambda: self._show_update_dialog(new_version, exe_url, html_url)
         )
         self.btn_update.pack(side="right", padx=8)
 
-    def _show_update_dialog(self, new_version, zip_url, html_url):
-        if not zip_url:
-            # Fallback to manual download if no zip is attached
+    def _show_update_dialog(self, new_version, exe_url, html_url):
+        if not exe_url:
+            # Fallback to manual download if no exe is attached
             if messagebox.askyesno("Nova Versão", f"RL Forge v{new_version} disponível!\nDeseja baixar no navegador?"):
                 webbrowser.open(html_url)
             return

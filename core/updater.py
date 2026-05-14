@@ -7,48 +7,28 @@ import subprocess
 import threading
 from pathlib import Path
 
-def apply_update(zip_path: str, progress_cb, on_complete_cb, on_error_cb):
-    """Extracts the update and launches the self-updating batch script."""
+def apply_update(exe_path: str, progress_cb, on_complete_cb, on_error_cb):
+    """Launches the self-updating batch script to replace the executable."""
     try:
         temp_dir = tempfile.gettempdir()
-        extract_path = os.path.join(temp_dir, "RL_Forge_Update")
         
-        progress_cb(10, "Extraindo arquivos...")
-        
-        if os.path.exists(extract_path):
-            import shutil
-            shutil.rmtree(extract_path)
-            
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_path)
-            
         progress_cb(50, "Preparando instalação...")
         
-        # The zip from GitHub usually has a root folder inside it (e.g., "RL Forge/").
-        # We need to find where the actual RL Forge.exe is inside the extracted dir.
-        exe_source_dir = extract_path
-        for root, dirs, files in os.walk(extract_path):
-            if "RL Forge.exe" in files:
-                exe_source_dir = root
-                break
-
         # Get current installation directory
         current_exe = sys.executable
         if not getattr(sys, 'frozen', False):
             # Running from source, testing mode
             current_exe = os.path.abspath(__file__)
             
-        install_dir = os.path.dirname(current_exe)
-        
         bat_path = os.path.join(temp_dir, "rl_forge_updater.bat")
         vbs_path = os.path.join(temp_dir, "rl_forge_updater.vbs")
         
-        # Create BAT file that waits, copies, restarts, and cleans up
+        # Create BAT file that waits, copies the exe, restarts, and cleans up
         bat_content = f"""@echo off
 timeout /t 2 /nobreak > NUL
-xcopy /s /e /y /q "{exe_source_dir}\\*" "{install_dir}\\"
+copy /y "{exe_path}" "{current_exe}"
 start "" "{current_exe}"
-del "{zip_path}"
+del "{exe_path}"
 del "{vbs_path}"
 del "%~f0"
 """
@@ -72,10 +52,10 @@ WshShell.Run chr(34) & "{bat_path}" & chr(34), 0, False
         on_error_cb(str(e))
 
 def download_and_update(url: str, progress_cb, on_complete_cb, on_error_cb):
-    """Downloads the ZIP from URL and applies the update."""
+    """Downloads the EXE from URL and applies the update."""
     try:
         temp_dir = tempfile.gettempdir()
-        zip_path = os.path.join(temp_dir, "RL_Forge_Update.zip")
+        exe_path = os.path.join(temp_dir, "RL_Forge_Update.exe")
         
         def report(blocknum, blocksize, totalsize):
             if totalsize > 0:
@@ -84,8 +64,8 @@ def download_and_update(url: str, progress_cb, on_complete_cb, on_error_cb):
                 p = min(95, int(percent * 95))
                 progress_cb(p, f"Baixando... {p}%")
 
-        urllib.request.urlretrieve(url, zip_path, reporthook=report)
-        apply_update(zip_path, progress_cb, on_complete_cb, on_error_cb)
+        urllib.request.urlretrieve(url, exe_path, reporthook=report)
+        apply_update(exe_path, progress_cb, on_complete_cb, on_error_cb)
         
     except Exception as e:
         on_error_cb(str(e))
