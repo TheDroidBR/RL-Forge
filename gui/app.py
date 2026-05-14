@@ -482,56 +482,14 @@ class BackupsPanel(ctk.CTkFrame):
         pkg = self.get_pkg_dir()
         if not pkg:
             return
-        if not messagebox.askyesno("Limpar Todos os Mods",
-                                    "Isso irá restaurar todos os arquivos originais a partir dos backups.\n\nDeseja continuar?"):
+        if not messagebox.askyesno("Restaurar Tudo",
+                                    "Restaurar todos os itens originais?"):
             return
-        
         restore_all(pkg, self.log_cb)
         self.refresh()
-        
-        # Show the super repair dialog for extra help
-        SuperRepairDialog(self.master.master.master.master) # Reach the main app window
 
 
-class SuperRepairDialog(ctk.CTkToplevel):
-    """Premium dialog explaining how to do a 100% factory reset via launchers."""
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-        self.title("⚙️ Reparação e Restauração")
-        self.geometry("500x420")
-        self.resizable(False, False)
-        self.transient(master)
-        self.grab_set()
-        
-        lbl = ctk.CTkLabel(self, text="Restauração Concluída", font=ctk.CTkFont("Segoe UI", 18, "bold"), text_color=SUCCESS)
-        lbl.pack(pady=(20, 10))
-        
-        msg = ("O RL Forge restaurou todos os arquivos que possuíam backup.\n\n"
-               "Se você apagou arquivos manualmente, corrompeu a instalação ou o jogo não abre, "
-               "você deve usar a ferramenta oficial de reparo do seu Launcher (Steam ou Epic) "
-               "para baixar os arquivos originais de fábrica novamente.")
-        
-        txt = ctk.CTkLabel(self, text=msg, font=ctk.CTkFont("Segoe UI", 13), text_color=TEXT, justify="center", wraplength=420)
-        txt.pack(padx=30, pady=10)
-        
-        # Steam Section
-        s_frame = ctk.CTkFrame(self, fg_color=CARD)
-        s_frame.pack(fill="x", padx=30, pady=10)
-        ctk.CTkLabel(s_frame, text="Steam", font=ctk.CTkFont("Segoe UI", 12, "bold"), text_color=ACCENT).pack(pady=(5, 0))
-        ctk.CTkButton(s_frame, text="Abrir Verificação da Steam", height=32, fg_color="#171a21", hover_color="#2a475e",
-                      command=lambda: webbrowser.open("steam://validate/252950")).pack(pady=10, padx=20, fill="x")
-        
-        # Epic Section
-        e_frame = ctk.CTkFrame(self, fg_color=CARD)
-        e_frame.pack(fill="x", padx=30, pady=10)
-        ctk.CTkLabel(e_frame, text="Epic Games", font=ctk.CTkFont("Segoe UI", 12, "bold"), text_color=ACCENT2).pack(pady=(5, 0))
-        ctk.CTkLabel(e_frame, text="No Launcher: Biblioteca > ... no Rocket League > Gerenciar > Verificar", 
-                     font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED).pack(pady=5)
-        
-        ctk.CTkButton(self, text="Entendi, fechar", width=200, height=35, fg_color=BORDER, hover_color=MUTED, text_color=TEXT,
-                      command=self.destroy).pack(pady=20)
-
-class BackupsPanel(ctk.CTkFrame):
+class CombosPanel(ctk.CTkFrame):
     """Panel showing saved combos (presets) of items."""
     def __init__(self, master, app_ref, **kwargs):
         super().__init__(master, fg_color=SURFACE, corner_radius=12, **kwargs)
@@ -758,11 +716,6 @@ class RLSwapperApp(ctk.CTk):
                       fg_color=CARD, hover_color=BORDER, text_color=TEXT,
                       font=ctk.CTkFont("Segoe UI", 12),
                       command=self._update_csv).pack(side="left", padx=4)
-
-        ctk.CTkButton(topbar, text="🛡️ Limpar Tudo", width=130, height=32,
-                      fg_color=CARD, hover_color=DANGER, text_color=TEXT,
-                      font=ctk.CTkFont("Segoe UI", 12),
-                      command=lambda: self.backups_panel._restore_all()).pack(side="left", padx=4)
                       
         ctk.CTkButton(topbar, text="ℹ️ Créditos", width=100, height=32,
                       fg_color="transparent", hover_color=BORDER, text_color=MUTED,
