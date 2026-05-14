@@ -20,11 +20,11 @@ from core.swapper import (
     get_color_variants, get_item_color, get_base_label, RL_PAINT_COLORS
 )
 from core.updater import start_update_thread
-from core.utils import get_base_dir
+from core.utils import get_base_dir, get_data_dir
 
 # Cache for item thumbnails to prevent disk thrashing
 IMAGE_CACHE = {}
-IMAGE_DIR = get_base_dir() / "data" / "images"
+IMAGE_DIR = get_data_dir() / "data" / "images"
 
 
 # ── Theme ─────────────────────────────────────────────────────────────────────

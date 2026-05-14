@@ -12,10 +12,10 @@ from pathlib import Path
 from .upk import decrypt_upk, encrypt_upk, patch_names
 
 PRODUCTS_URL = "https://raw.githubusercontent.com/ShinyEmii/Toga-Files/refs/heads/master/products.csv"
-from core.utils import get_base_dir
+from core.utils import get_base_dir, get_data_dir
 
-CONFIG_FILE  = get_base_dir() / "data" / "config.json"
-CSV_FILE     = get_base_dir() / "data" / "products.csv"
+CONFIG_FILE  = get_data_dir() / "data" / "config.json"
+CSV_FILE     = get_data_dir() / "data" / "products.csv"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
