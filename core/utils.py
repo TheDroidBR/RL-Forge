@@ -9,9 +9,18 @@ def get_base_dir() -> Path:
     return Path(__file__).resolve().parent.parent
 
 def get_data_dir() -> Path:
-    """Return absolute path to persistent user data. In --onefile, this is next to the .exe."""
+    """Return absolute path to persistent user data in %AppData%/RLForge."""
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        path = Path(appdata) / "RLForge"
+        # We don't necessarily need to create it here, but it's safe
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            return path
+        except:
+            pass
+            
+    # Fallback to executable directory if APPDATA is not available
     if getattr(sys, 'frozen', False):
-        # Path to the directory containing the .exe
         return Path(sys.executable).parent
-    # Path to the project root when running from source
     return Path(__file__).resolve().parent.parent

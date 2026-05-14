@@ -150,7 +150,7 @@ def get_backup_dir(pkg_dir: str) -> Path:
     backup = cfg.get("backup_dir", "")
     if backup:
         return Path(backup)
-    return Path(pkg_dir).parent / "_RL_Swapper_Backups"
+    return Path(pkg_dir).parent / "_RL_Forge_Backups"
 
 def list_backups(pkg_dir: str) -> list[dict]:
     """Return list of active swaps (files that have a backup)."""
