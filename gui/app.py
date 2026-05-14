@@ -716,6 +716,11 @@ class RLSwapperApp(ctk.CTk):
                       fg_color=CARD, hover_color=BORDER, text_color=TEXT,
                       font=ctk.CTkFont("Segoe UI", 12),
                       command=self._update_csv).pack(side="left", padx=4)
+
+        ctk.CTkButton(topbar, text="🛡️ Limpar Tudo", width=130, height=32,
+                      fg_color=CARD, hover_color=DANGER, text_color=TEXT,
+                      font=ctk.CTkFont("Segoe UI", 12),
+                      command=lambda: self.backups_panel._restore_all()).pack(side="left", padx=4)
                       
         ctk.CTkButton(topbar, text="ℹ️ Créditos", width=100, height=32,
                       fg_color="transparent", hover_color=BORDER, text_color=MUTED,
