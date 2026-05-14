@@ -384,8 +384,10 @@ class BackupsPanel(ctk.CTkFrame):
                                          text_color=MUTED, font=ctk.CTkFont("Segoe UI", 13))
 
     def refresh(self):
+        self.empty_label.pack_forget()
         for w in self.scroll.winfo_children():
-            w.destroy()
+            if w != self.empty_label:
+                w.destroy()
         pkg = self.get_pkg_dir()
         if not pkg:
             return
@@ -444,8 +446,10 @@ class CombosPanel(ctk.CTkFrame):
                                          text_color=MUTED, font=ctk.CTkFont("Segoe UI", 13))
 
     def refresh(self):
+        self.empty_label.pack_forget()
         for w in self.scroll.winfo_children():
-            w.destroy()
+            if w != self.empty_label:
+                w.destroy()
             
         presets = self.app.cfg.get("presets", {})
         if not presets:
