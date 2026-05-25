@@ -10,6 +10,7 @@ dist/
 *.spec
 *.upk
 analyze_alpha_boost.py
+electron/python/
 
 # App Data (Local configurations and dynamic images)
 data/config.json

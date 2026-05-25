@@ -26,6 +26,10 @@
       {
         "from": "../core",
         "to": "core"
+      },
+      {
+        "from": "python",
+        "to": "python"
       }
     ]
   }
