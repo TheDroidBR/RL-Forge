@@ -1,17 +1,15 @@
-import os
 import threading
 import time
 import requests
 import hashlib
 import platform
 import uuid
-from pathlib import Path
 from core.utils import get_data_dir
 
 # Solari Metrics Configuration
 METRICS_URL = "https://solarirpc.com/counter.php"
 APP_ITEM_ID = "rlforge"
-APP_VERSION = "1.0.0"
+APP_VERSION = "2.0.0"
 
 def get_machine_id():
     """Generates a unique, anonymous hash for the machine."""
@@ -19,7 +17,7 @@ def get_machine_id():
         # Use a combination of node name, architecture and getnode
         unique_str = f"{platform.node()}-{platform.machine()}-{uuid.getnode()}"
         return hashlib.sha256(unique_str.encode()).hexdigest()
-    except:
+    except Exception:
         return "unknown_machine"
 
 def send_ping(uid):
@@ -35,7 +33,7 @@ def send_ping(uid):
             req = urllib.request.Request(url, headers={"User-Agent": "RLForge-Client"})
             with urllib.request.urlopen(req, timeout=10) as response:
                 response.read()
-        except:
+        except Exception:
             pass
 
 def send_increment():
@@ -49,7 +47,7 @@ def send_increment():
             req = urllib.request.Request(url, headers={"User-Agent": "RLForge-Client"})
             with urllib.request.urlopen(req, timeout=10) as response:
                 response.read()
-        except:
+        except Exception:
             pass
 
 def _metrics_loop(uid):
@@ -64,7 +62,7 @@ def _metrics_loop(uid):
         try:
             get_data_dir().mkdir(parents=True, exist_ok=True)
             flag_file.touch()
-        except:
+        except Exception:
             pass
             
     while True:

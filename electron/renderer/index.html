@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' http://127.0.0.1:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' http://127.0.0.1:* data:;" />
+  <title>RL Forge</title>
+  <meta name="description" content="RL Forge - Um utilitário de modificação e swap de cosméticos offline para Rocket League." />
+  <meta property="og:title" content="RL Forge" />
+  <meta property="og:description" content="Substitua e customize cosméticos localmente no Rocket League de forma simples e rápida." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ══ TITLEBAR ══════════════════════════════════════════════════════════════ -->
+<div id="titlebar">
+  <div id="titlebar-logo">
+    <span class="logo-rocket">🚀</span>
+    <span class="logo-text">RL <strong>Forge</strong></span>
+    <span id="app-version" class="version-badge">v2.0.0</span>
+  </div>
+
+  <!-- Platform toggle -->
+  <div class="platform-toggle" id="platform-toggle">
+    <button class="platform-btn active" id="btn-platform-epic" data-platform="epic">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Epic
+    </button>
+    <button class="platform-btn" id="btn-platform-steam" data-platform="steam">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.37l3.1-6.4a3.5 3.5 0 1 1 4.1-4.1l6.4-3.1C23.5 14.5 24 13.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      Steam
+    </button>
+  </div>
+
+  <div id="titlebar-path">
+    <div class="path-wrapper">
+      <span class="path-icon">📁</span>
+      <input id="folder-display" class="path-input" readonly placeholder="Selecione a pasta CookedPCConsole..." />
+    </div>
+    <button class="btn-icon" id="btn-browse" title="Selecionar pasta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+    <button class="btn-icon btn-detect" id="btn-autodetect" title="Auto-detectar pasta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="titlebar-actions">
+    <button class="btn-flat" id="btn-update-items" title="Atualizar itens">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      <span data-i18n="btn_update_items">☁️ Atualizar</span>
+    </button>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-lang-pt" data-lang="pt-BR">PT</button>
+      <button class="lang-btn" id="btn-lang-en" data-lang="en">EN</button>
+    </div>
+    <button class="btn-flat btn-discord" id="btn-discord" title="Discord">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.03c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.03A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.19.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z"/>
+      </svg>
+      <span>Discord</span>
+    </button>
+    <div id="game-status" class="game-status offline" title="Status do Rocket League">
+      <span class="status-dot"></span>
+      <span class="status-text">RL</span>
+    </div>
+  </div>
+
+  <div id="window-controls">
+    <button id="btn-minimize" class="wc-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="11" width="20" height="2"/></svg>
+    </button>
+    <button id="btn-maximize" class="wc-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    </button>
+    <button id="btn-close" class="wc-btn wc-close">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+
+<!-- ══ TAB BAR ════════════════════════════════════════════════════════════════ -->
+<div id="tabbar">
+  <button class="tab active" data-tab="swap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+    <span data-i18n="tab_swap">Swap</span>
+  </button>
+  <button class="tab" data-tab="combos">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+    </svg>
+    <span data-i18n="tab_combos">Combos</span>
+  </button>
+  <button class="tab" data-tab="backups">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"/>
+      <path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2z"/>
+    </svg>
+    <span data-i18n="tab_backups">Backups</span>
+  </button>
+  <button class="tab" data-tab="credits">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+    </svg>
+    <span data-i18n="btn_credits">Créditos</span>
+  </button>
+</div>
+
+<!-- ══ CONTENT ════════════════════════════════════════════════════════════════ -->
+<main id="content">
+
+  <!-- ── SWAP TAB ──────────────────────────────────────────────────────────── -->
+  <div id="tab-swap" class="tab-panel active">
+    <div class="three-col">
+
+      <!-- LEFT PICKER -->
+      <section class="picker-panel" id="orig-panel">
+        <div class="picker-header">
+          <span class="picker-title" data-i18n="orig_picker_title">ITEM QUE VOCÊ USA</span>
+          <span class="picker-sel" id="orig-sel-label"></span>
+        </div>
+        <div class="picker-search">
+          <input type="text" class="search-input" id="orig-search" data-i18n-placeholder="search_placeholder" placeholder="🔍 Buscar..." />
+        </div>
+        <div class="picker-filter-row">
+          <select class="slot-select" id="orig-slot-select"></select>
+          <label class="fav-toggle">
+            <input type="checkbox" id="orig-fav-only" />
+            <span>⭐</span>
+          </label>
+        </div>
+        <div class="card-list" id="orig-list">
+          <div class="loading-cards">
+            <div class="spinner"></div>
+            <span>Carregando itens...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTER CONTROLS -->
+      <section id="center-col">
+        <div class="center-inner">
+
+          <!-- Paint section -->
+          <div class="center-section" id="paint-section">
+            <div class="section-label" data-i18n="paint_section_title">🎨 PINTURA</div>
+
+            <!-- Color preview + picker -->
+            <div class="color-preview-row">
+              <div id="color-swatch" class="color-swatch" style="background:#555577;"></div>
+              <div class="color-info">
+                <span id="color-name-label" class="color-name">Nenhuma</span>
+                <span id="color-hex-label" class="color-hex">#555577</span>
+              </div>
+            </div>
+
+            <input type="color" id="native-color-picker" style="display:none;" />
+            <button class="btn-center btn-select-color" id="btn-select-color" data-i18n="btn_select_color">Selecionar Cor</button>
+            <button class="btn-center btn-clear-color" id="btn-clear-color" data-i18n="btn_clear_color" style="display:none;">Limpar Cor</button>
+
+
+          </div>
+
+          <!-- Boost Flame Section -->
+          <div class="center-section" id="boost-flame-section" style="display:none;">
+            <div class="section-label" data-i18n="flame_section_title">🔥 FOGO DO ESCAPAMENTO</div>
+
+            <!-- Magnet toggle row -->
+            <div class="flame-magnet-row">
+              <label class="flame-magnet-label" for="flame-magnet-checkbox">
+                <span data-i18n="flame_magnet_label">🧲 Ímã</span>
+              </label>
+              <input type="checkbox" id="flame-magnet-checkbox" class="flame-magnet-checkbox" checked />
+            </div>
+
+            <div id="flame-controls-wrapper" class="flame-controls-wrapper disabled">
+              <!-- Color preview + picker -->
+              <div class="color-preview-row">
+                <div id="flame-color-swatch" class="color-swatch" style="background:#555577;"></div>
+                <div class="color-info">
+                  <span id="flame-color-name-label" class="color-name">Nenhuma</span>
+                  <span id="flame-color-hex-label" class="color-hex">#555577</span>
+                </div>
+              </div>
+
+              <input type="color" id="native-flame-color-picker" style="display:none;" />
+              <button class="btn-center btn-select-color" id="btn-select-flame-color" data-i18n="btn_select_flame_color">Selecionar Cor</button>
+              <button class="btn-center btn-clear-color" id="btn-clear-flame-color" data-i18n="btn_clear_flame_color" style="display:none;">Limpar Cor</button>
+            </div>
+          </div>
+
+          <!-- Recent Colors -->
+          <div class="center-section" id="recent-colors-section">
+            <div class="section-label" data-i18n="recent_colors_title">CORES RECENTES</div>
+            <div class="recent-colors-grid" id="recent-colors-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- SWAP button -->
+          <button class="btn-swap" id="btn-swap" disabled data-i18n="btn_swap_action">⚡ SWAP</button>
+
+          <!-- Save combo -->
+          <button class="btn-center btn-save-combo" id="btn-save-combo" data-i18n="btn_save_combo">💾 Salvar Combo</button>
+
+          <!-- Console -->
+          <div class="console-box" id="console-box">
+            <div class="console-header">
+              <span class="section-label" data-i18n="console_header_title">💻 CONSOLE</span>
+              <button class="btn-tiny" id="btn-clear-console" data-i18n="btn_clear">Limpar</button>
+            </div>
+            <div class="console-lines" id="console-lines">
+              <span class="console-line muted" data-i18n="console_ready">Pronto.</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- RIGHT PICKER -->
+      <section class="picker-panel" id="target-panel">
+        <div class="picker-header">
+          <span class="picker-title" data-i18n="target_picker_title">VISUAL QUE VOCÊ QUER</span>
+          <span class="picker-sel" id="target-sel-label"></span>
+        </div>
+        <div class="picker-search">
+          <input type="text" class="search-input" id="target-search" data-i18n-placeholder="search_placeholder" placeholder="🔍 Buscar..." />
+        </div>
+        <div class="picker-filter-row">
+          <label class="fav-toggle">
+            <input type="checkbox" id="target-fav-only" />
+            <span>⭐</span>
+          </label>
+        </div>
+
+
+        <div class="card-list" id="target-list">
+          <div class="loading-cards">
+            <div class="spinner"></div>
+            <span>Carregando itens...</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ── COMBOS TAB ────────────────────────────────────────────────────────── -->
+  <div id="tab-combos" class="tab-panel">
+    <div class="combos-layout">
+      <div class="combos-header-row">
+        <h2 class="panel-title" data-i18n="combos_header_title">📦 Meus Combos</h2>
+        <button class="btn-primary" id="btn-import-code" data-i18n="btn_import_code">📥 Importar Código</button>
+      </div>
+      <div class="combo-search-row">
+        <input type="text" class="search-input" id="combo-search" placeholder="🔍 Buscar combos..." data-i18n-placeholder="search_combos" />
+      </div>
+      <div class="combo-list" id="combo-list">
+        <div class="empty-state" id="combos-empty">
+          <span class="empty-icon">📦</span>
+          <p data-i18n="no_combos_msg">Nenhum combo salvo. Clique em 'Salvar Combo' na aba Swap!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BACKUPS TAB ───────────────────────────────────────────────────────── -->
+  <div id="tab-backups" class="tab-panel">
+    <div class="backups-layout">
+      <div class="combos-header-row">
+        <h2 class="panel-title" data-i18n="backups_header_title">💾 Backups Ativos</h2>
+        <div class="header-actions">
+          <button class="btn-outline" id="btn-refresh-backups" data-i18n="btn_refresh">🔄 Atualizar</button>
+          <button class="btn-danger" id="btn-restore-all" data-i18n="btn_restore_all_title">↺ Restaurar Tudo</button>
+        </div>
+      </div>
+      <div class="backup-list" id="backup-list">
+        <div class="empty-state" id="backups-empty">
+          <span class="empty-icon">💾</span>
+          <p data-i18n="no_backups_msg">Nenhum swap ativo. Faça um swap na aba principal!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CREDITS TAB ───────────────────────────────────────────────────────── -->
+  <div id="tab-credits" class="tab-panel">
+    <div class="credits-layout">
+      <div class="credits-logo">
+        <span class="credits-rocket">🚀</span>
+        <h1 class="credits-title">RL <strong>Forge</strong></h1>
+        <p class="credits-version" id="credits-version">v2.0.0 — GNU GPL v3.0</p>
+      </div>
+      <div class="credits-body" id="credits-body">
+        <p>Desenvolvido por <strong>TheDroid</strong> com amor para a comunidade.</p>
+        <p>Este projeto só é possível graças à comunidade de modding:</p>
+        <ul>
+          <li><strong>ShinyEmii</strong> (Toga-Files) — Banco de dados de itens e chaves AES.</li>
+          <li><strong>AltimorTASDK</strong> (RLUPKTool) — Motor de descriptografia (MIT License).</li>
+        </ul>
+        <p>O código-fonte do RL Forge é aberto e livre sob a <strong>GNU GPL v3.0</strong>.</p>
+      </div>
+      <div class="credits-links">
+        <button class="btn-outline" id="btn-changelog">📋 Changelog</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══ MODALS ═════════════════════════════════════════════════════════════════ -->
+
+<!-- Generic modal -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 class="modal-title" id="modal-title">Título</h3>
+    <p class="modal-body"  id="modal-body">Mensagem</p>
+    <div class="modal-input-wrap" id="modal-input-wrap">
+      <textarea id="modal-input" class="modal-input" rows="3" placeholder="..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" id="modal-cancel">Cancelar</button>
+      <button class="btn-primary" id="modal-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save Combo modal -->
+<div id="save-combo-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 class="modal-title" data-i18n="btn_save_combo">💾 Salvar Combo</h3>
+    <p class="modal-body">Dê um nome para este combo:</p>
+    <input type="text" id="save-combo-name" class="modal-input-line" placeholder="Ex: Fennec TW Boost..." />
+    <div class="modal-actions">
+      <button class="btn-outline" id="save-combo-cancel">Cancelar</button>
+      <button class="btn-primary" id="save-combo-confirm">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══════════════════════════════════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

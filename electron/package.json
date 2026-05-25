@@ -1,0 +1,32 @@
+{
+  "name": "rl-forge",
+  "productName": "RL Forge",
+  "version": "2.0.0",
+  "description": "Client-side item swap utility for Rocket League",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  },
+  "build": {
+    "appId": "com.thedroid.rlforge",
+    "productName": "RL Forge",
+    "win": {
+      "target": "nsis",
+      "icon": "../assets/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "../api",
+        "to": "api"
+      },
+      {
+        "from": "../core",
+        "to": "core"
+      }
+    ]
+  }
+}

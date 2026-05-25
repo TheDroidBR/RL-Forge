@@ -15,8 +15,9 @@ def build():
     import customtkinter
     ctk_path = os.path.dirname(customtkinter.__file__)
     
+    import sys
     cmd = [
-        "pyinstaller",
+        sys.executable, "-m", "PyInstaller",
         "--noconfirm",
         "--windowed", # no console
         "--onefile",  # single executable

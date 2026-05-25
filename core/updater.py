@@ -2,10 +2,7 @@ import os
 import sys
 import tempfile
 import urllib.request
-import zipfile
-import subprocess
 import threading
-from pathlib import Path
 
 def apply_update(exe_path: str, progress_cb, on_complete_cb, on_error_cb):
     """Launches the self-updating batch script to replace the executable."""

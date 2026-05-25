@@ -8,6 +8,8 @@ __pycache__/
 build/
 dist/
 *.spec
+*.upk
+analyze_alpha_boost.py
 
 # App Data (Local configurations and dynamic images)
 data/config.json
@@ -24,6 +26,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+node_modules/
+*.log
 
 # IDEs
 .idea/

@@ -1,15 +1,18 @@
+# ruff: noqa: E402
 """
-RL Swapper — main entry point.
+RL Forge — main entry point (headless API server fallback).
 """
 
 import sys
-import os
-from core.utils import get_base_dir
+from pathlib import Path
 
-sys.path.insert(0, str(get_base_dir()))
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
 
-from gui.app import RLSwapperApp
+from api.server import app, find_free_port
 
 if __name__ == "__main__":
-    app = RLSwapperApp()
-    app.mainloop()
+    port = find_free_port()
+    # Electron or bat script reads this line to know which port to connect to
+    print(f"PORT:{port}", flush=True)
+    app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
