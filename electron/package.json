@@ -9,11 +9,13 @@
     "build": "electron-builder"
   },
   "devDependencies": {
-    "electron": "^31.0.0"
+    "electron": "^31.0.0",
+    "electron-builder": "^26.8.1"
   },
   "build": {
     "appId": "com.thedroid.rlforge",
     "productName": "RL Forge",
+    "publish": null,
     "win": {
       "target": "nsis",
       "icon": "../assets/icon.ico"
