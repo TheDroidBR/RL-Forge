@@ -23,6 +23,9 @@ def build():
         # Add our app data (config, csv, images)
         "--add-data=data;data/",
         
+        # Add Electron renderer assets (index.html, style.css, app.js)
+        "--add-data=electron/renderer;electron/renderer/",
+        
         # Add the Tool binary
         "--add-binary=RLUPKTool.exe;.",
         
