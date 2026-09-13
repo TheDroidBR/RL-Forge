@@ -26,37 +26,18 @@ function findPython() {
   const serverScript = path.join(__dirname, "..", "api", "server.py");
 
   // 1. Try local workspace virtual environment (.venv)
-  const venvPython = path.join(__dirname, "..", "..", ".venv", "Scripts", "python.exe");
-  const venvCfg = path.join(__dirname, "..", "..", ".venv", "pyvenv.cfg");
-  let venvOk = false;
-  if (fs.existsSync(venvPython) && fs.existsSync(venvCfg)) {
-    try {
-      const cfgContent = fs.readFileSync(venvCfg, "utf8");
-      // Check home directory
-      const homeMatch = cfgContent.match(/home\s*=\s*(.*)/);
-      if (homeMatch) {
-        const homePath = homeMatch[1].trim();
-        if (fs.existsSync(homePath)) {
-          venvOk = true;
-        }
-      }
-      // If home check failed or not found, check executable if present
-      const exeMatch = cfgContent.match(/executable\s*=\s*(.*)/);
-      if (exeMatch) {
-        const baseExe = exeMatch[1].trim();
-        if (fs.existsSync(baseExe)) {
-          venvOk = true;
-        } else {
-          venvOk = false; // base exe is explicitly defined but missing
-        }
-      }
-    } catch (e) {
-      // ignore, fall back to safe check
-      venvOk = fs.existsSync(venvPython);
+  const venvCandidates = [
+    path.resolve(__dirname, "..", ".venv", "Scripts", "python.exe"),
+    path.resolve(__dirname, "..", "..", ".venv", "Scripts", "python.exe"),
+    path.resolve(__dirname, "..", "..", "..", ".venv", "Scripts", "python.exe"),
+    "D:\\Itens\\Antigravity\\.venv\\Scripts\\python.exe",
+  ];
+  for (const venvPython of venvCandidates) {
+    const venvDir = path.dirname(path.dirname(venvPython));
+    const venvCfg = path.join(venvDir, "pyvenv.cfg");
+    if (fs.existsSync(venvPython) && fs.existsSync(venvCfg)) {
+      return { exe: venvPython, args: [serverScript] };
     }
-  }
-  if (venvOk) {
-    return { exe: venvPython, args: [serverScript] };
   }
 
   // 2. Try common specific Windows installations

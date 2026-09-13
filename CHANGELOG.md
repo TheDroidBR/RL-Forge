@@ -8,10 +8,11 @@ All notable changes to RL Forge will be documented in this file.
 
 ### 🐛 Bug Fixes & Engine Stability
 
-- **Fixed UE3 Memory Alignment Crash on All Swapped Items:** Deep reverse-engineering revealed that in Unreal Engine 3 Cooked SeekFree UPK packages, exports resolve payload data via `offset_in_chunk = Export.SerialOffset - Chunk.UncompressedOffset`. When name replacements changed string lengths (`delta != 0`), previous versions shifted `Export.SerialOffset` but never updated `FCompressedChunkInfo.UncompressedOffset`, displacing every object read by `delta` bytes and crashing the game immediately upon loading any swapped cosmetic. `patch_upk_names` now strictly synchronizes all table offsets, export serial offsets, and chunk table uncompressed offsets.
-- **Resolved RLUPKTool AES Padding Overwrite Bug:** Fixed a critical encryption flaw in `RLUPKTool.exe` where non-16-byte aligned encrypted blocks caused a backward seek when writing compressed chunks, overwriting the trailing bytes of the garbage table (destroying the embedded secondary UPK header `0x9E2A83C1`). RL Forge now automatically pre-aligns the uncompressed header before re-encryption, completely preventing garbage table corruption.
+- **Fixed UE3 Engine Crash on All Swapped Items:** Deep reverse-engineering revealed that in Unreal Engine 3 Cooked SeekFree UPK packages, exports resolve payload data via chunk-relative offsets. In-place null-padding preservation is now strictly maintained whenever replacement strings fit within the original buffer (`delta = 0`), ensuring zero table offsets shift and 100% bit-for-bit chunk layout integrity.
+- **Chunk Synchronization & Header Integrity:** When string expansions occur (`delta > 0`), both `UncompressedOffset` and `CompressedOffset` in the Cooked SeekFree Chunk Table (`FCompressedChunkInfo`) are synchronized alongside `Export.SerialOffset` and table pointers. Erroneous header padding before the chunk table was completely eliminated, preventing `Bad name index` engine lookup crashes.
 - **Instant Native Package Name Extraction:** Integrated native AES-256-ECB header decryption via `cryptography`, speeding up target package inspection and dynamic chassis/material detection from ~5–10 seconds down to ~5 milliseconds.
 - **Updated Item Database:** Synced local `products.csv` database with the latest Toga-Files repository (9,295 items across 22 cosmetic categories).
+- **Environment & Launcher Enhancements:** Improved Python virtual environment auto-detection in Electron `main.js` across junction points and Windows shortcuts.
 
 ---
 

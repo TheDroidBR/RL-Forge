@@ -122,38 +122,6 @@ def decrypt_upk(src_path: str, aes_str: str | None, out_path: str) -> None:
         shutil.copy2(decrypted, out)
 
 
-def align_header_for_encryption(data: bytes) -> bytes:
-    """
-    Ensure the encrypted header block length is a multiple of 16 bytes.
-    RLUPKTool.exe pads encrypted block to 16 bytes, but writes GarbageSize
-    and then seeks to TotalHeaderSize. If enc_len % 16 != 0, this seek rewinds
-    and overwrites the last padding bytes of GarbageData (including UPK_MAGIC).
-    By inserting the alignment padding into the uncompressed header before the
-    garbage data and updating TotalHeaderSize, enc_len % 16 is guaranteed to be 0,
-    preventing any garbage overwrite.
-    """
-    ba = bytearray(data)
-    if len(ba) < 256 or _read_u32(ba, 0) != UPK_MAGIC:
-        return data
-    try:
-        hdr = _parse_full_header(ba)
-        name_off = hdr["name_table_start"]
-        tot_hdr = _read_i32(ba, hdr["total_header_size_off"])
-        garbage_size = _read_i32(ba, hdr["chunk_info_off_off"] - 4)
-        
-        enc_len = tot_hdr - garbage_size - name_off
-        if enc_len <= 0:
-            return data
-        padding = ((enc_len + 15) & ~15) - enc_len
-        if padding > 0:
-            insert_pos = name_off + enc_len
-            ba[insert_pos:insert_pos] = b"\x00" * padding
-            _write_i32(ba, hdr["total_header_size_off"], tot_hdr + padding)
-        return bytes(ba)
-    except Exception:
-        return data
-
-
 def encrypt_upk(src_path: str, aes_str: str | None, out_path: str) -> None:
     """
     Re-encrypt a decrypted .upk -> out_path using RLUPKTool.exe.
@@ -167,17 +135,6 @@ def encrypt_upk(src_path: str, aes_str: str | None, out_path: str) -> None:
         tmp_dir = Path(tmp)
         work    = tmp_dir / src.name
         shutil.copy2(src, work)
-
-        # Protect against RLUPKTool.exe AES padding overwrite bug
-        try:
-            with open(work, "rb") as f:
-                work_data = f.read()
-            aligned_work = align_header_for_encryption(work_data)
-            if len(aligned_work) != len(work_data) or aligned_work != work_data:
-                with open(work, "wb") as f:
-                    f.write(aligned_work)
-        except Exception:
-            pass
 
         result = subprocess.run([str(_TOOL_EXE), str(work)],
                                 capture_output=True, text=True, **_SUBPROCESS_KWARGS)
@@ -391,6 +348,7 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
     old_fstring_end = entry_start + 4 + actual_len
     old_flags       = bytes(ba[old_fstring_end:old_entry_end])
 
+    old_data_len    = actual_len
     # 1. Encode replacement in the same format as original
     if is_unicode:
         new_bytes = replace.encode("utf-16-le") + b"\x00\x00"
@@ -399,7 +357,14 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
         new_bytes = replace.encode("latin-1") + b"\x00"
         new_fstring_len = len(new_bytes)
 
-    # 2. Re-pack entry with exact FString length and shift UE3 offsets accordingly
+    # 2. Optimization: If replacement fits within original buffer, null-pad to preserve exact binary structure
+    if len(new_bytes) <= old_data_len:
+        padding = b"\x00" * (old_data_len - len(new_bytes))
+        new_entry = struct.pack("<i", old_fstring_len) + new_bytes + padding + old_flags
+        ba[entry_start:old_entry_end] = new_entry
+        return bytes(ba)
+
+    # 3. If replacement is longer, re-pack entry and shift UE3 offsets accordingly
     new_fstring = struct.pack("<i", new_fstring_len) + new_bytes
     new_entry   = new_fstring + old_flags
     delta       = len(new_entry) - (old_entry_end - entry_start)
@@ -418,8 +383,6 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
     shift_abs(hdr["export_offset_off"])
     shift_abs(hdr["import_offset_off"])
     shift_abs(hdr["depends_offset_off"])
-    shift_abs(53)  # ImportExportGuidsOffset
-    shift_abs(65)  # ThumbnailTableOffset
 
     # Shift relative chunk info offset
     name_offset    = _read_i32(ba, hdr["name_offset_off"])
@@ -441,7 +404,7 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
         if serial_size > 0 and serial_offset >= old_entry_end:
             _write_i32(ba, off + 36, serial_offset + delta)
 
-    # Shift Chunk Info Table UncompressedOffsets to keep export offsets and chunk offsets in exact sync
+    # Shift Chunk Info Table UncompressedOffsets AND CompressedOffsets
     if chunk_info_abs + 4 <= len(ba):
         chunk_count = _read_i32(ba, chunk_info_abs)
         licensee_version = _read_u16(ba, 6)
@@ -454,10 +417,16 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
                 u_off = struct.unpack_from("<q", ba, pos)[0]
                 if u_off >= old_entry_end:
                     struct.pack_into("<q", ba, pos, u_off + delta)
+                c_off = struct.unpack_from("<q", ba, pos + 12)[0]
+                if c_off >= old_entry_end:
+                    struct.pack_into("<q", ba, pos + 12, c_off + delta)
             else:
                 u_off = struct.unpack_from("<i", ba, pos)[0]
                 if u_off >= old_entry_end:
                     struct.pack_into("<i", ba, pos, u_off + delta)
+                c_off = struct.unpack_from("<i", ba, pos + 8)[0]
+                if c_off >= old_entry_end:
+                    struct.pack_into("<i", ba, pos + 8, c_off + delta)
             pos += chunk_entry_size
 
     return bytes(ba)
