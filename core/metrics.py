@@ -9,7 +9,7 @@ from core.utils import get_data_dir
 # Solari Metrics Configuration
 METRICS_URL = "https://solarirpc.com/counter.php"
 APP_ITEM_ID = "rlforge"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.0.2"
 
 def get_machine_id():
     """Generates a unique, anonymous hash for the machine."""

@@ -29,6 +29,9 @@ def build():
         # Add the Tool binary
         "--add-binary=RLUPKTool.exe;.",
         
+        # Ensure cryptography primitives and C-extensions are fully bundled
+        "--collect-all=cryptography",
+        
         "main.py"
     ]
     

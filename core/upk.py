@@ -12,6 +12,8 @@ import shutil
 import os
 import base64
 from pathlib import Path
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 from core.utils import get_base_dir
 
 # Path to RLUPKTool.exe, sitting next to this package's parent
@@ -19,10 +21,35 @@ _TOOL_EXE = get_base_dir() / "RLUPKTool.exe"
 
 UPK_MAGIC = 0x9E2A83C1
 
+# Default Rocket League AES-256 key
+DEFAULT_AES_KEY = "c7df6b13252acc7147bb51c98ad7e34b7fe500b77fa5fab293e2f24e6b17e779"
+DEFAULT_AES_KEY_BYTES = bytes.fromhex(DEFAULT_AES_KEY)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AES key resolver
 # ─────────────────────────────────────────────────────────────────────────────
+
+def resolve_aes_key_bytes(aes_str: str | None) -> bytes:
+    """Return 32-byte AES key for cryptography. Falls back to default RL key."""
+    if not aes_str or not aes_str.strip():
+        return DEFAULT_AES_KEY_BYTES
+    s = aes_str.strip()
+    if s.startswith(("0x", "0X")):
+        s = s[2:]
+    if len(s) == 64 and all(c in "0123456789abcdefABCDEF" for c in s):
+        try:
+            return bytes.fromhex(s)
+        except Exception:
+            pass
+    try:
+        raw = base64.b64decode(s)
+        if len(raw) in (16, 24, 32):
+            return raw.ljust(32, b"\x00") if len(raw) < 32 else raw
+    except Exception:
+        pass
+    return DEFAULT_AES_KEY_BYTES
+
 
 def resolve_aes_key_arg(aes_str: str | None) -> list[str]:
     """
@@ -95,6 +122,38 @@ def decrypt_upk(src_path: str, aes_str: str | None, out_path: str) -> None:
         shutil.copy2(decrypted, out)
 
 
+def align_header_for_encryption(data: bytes) -> bytes:
+    """
+    Ensure the encrypted header block length is a multiple of 16 bytes.
+    RLUPKTool.exe pads encrypted block to 16 bytes, but writes GarbageSize
+    and then seeks to TotalHeaderSize. If enc_len % 16 != 0, this seek rewinds
+    and overwrites the last padding bytes of GarbageData (including UPK_MAGIC).
+    By inserting the alignment padding into the uncompressed header before the
+    garbage data and updating TotalHeaderSize, enc_len % 16 is guaranteed to be 0,
+    preventing any garbage overwrite.
+    """
+    ba = bytearray(data)
+    if len(ba) < 256 or _read_u32(ba, 0) != UPK_MAGIC:
+        return data
+    try:
+        hdr = _parse_full_header(ba)
+        name_off = hdr["name_table_start"]
+        tot_hdr = _read_i32(ba, hdr["total_header_size_off"])
+        garbage_size = _read_i32(ba, hdr["chunk_info_off_off"] - 4)
+        
+        enc_len = tot_hdr - garbage_size - name_off
+        if enc_len <= 0:
+            return data
+        padding = ((enc_len + 15) & ~15) - enc_len
+        if padding > 0:
+            insert_pos = name_off + enc_len
+            ba[insert_pos:insert_pos] = b"\x00" * padding
+            _write_i32(ba, hdr["total_header_size_off"], tot_hdr + padding)
+        return bytes(ba)
+    except Exception:
+        return data
+
+
 def encrypt_upk(src_path: str, aes_str: str | None, out_path: str) -> None:
     """
     Re-encrypt a decrypted .upk -> out_path using RLUPKTool.exe.
@@ -108,6 +167,17 @@ def encrypt_upk(src_path: str, aes_str: str | None, out_path: str) -> None:
         tmp_dir = Path(tmp)
         work    = tmp_dir / src.name
         shutil.copy2(src, work)
+
+        # Protect against RLUPKTool.exe AES padding overwrite bug
+        try:
+            with open(work, "rb") as f:
+                work_data = f.read()
+            aligned_work = align_header_for_encryption(work_data)
+            if len(aligned_work) != len(work_data) or aligned_work != work_data:
+                with open(work, "wb") as f:
+                    f.write(aligned_work)
+        except Exception:
+            pass
 
         result = subprocess.run([str(_TOOL_EXE), str(work)],
                                 capture_output=True, text=True, **_SUBPROCESS_KWARGS)
@@ -284,7 +354,11 @@ def _detect_flags_size(data: bytes, hdr: dict) -> int:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
-    """Patch a single name entry and update all affected header offsets."""
+    """
+    Patch a single name entry and update all affected header offsets,
+    export table serial offsets, and chunk table uncompressed offsets
+    in exact synchronization to prevent UE3 memory alignment crashes.
+    """
     ba = bytearray(data)
 
     if _read_u32(ba, 0) != UPK_MAGIC:
@@ -320,20 +394,13 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
     # 1. Encode replacement in the same format as original
     if is_unicode:
         new_bytes = replace.encode("utf-16-le") + b"\x00\x00"
-        old_data_len = actual_len
+        new_fstring_len = -(len(new_bytes) // 2)
     else:
         new_bytes = replace.encode("latin-1") + b"\x00"
-        old_data_len = actual_len
+        new_fstring_len = len(new_bytes)
 
-    # 2. Optimization: Null-pad if shorter or equal to maintain structure
-    if len(new_bytes) <= old_data_len:
-        padding = b"\x00" * (old_data_len - len(new_bytes))
-        new_entry = struct.pack("<i", old_fstring_len) + new_bytes + padding + old_flags
-        ba[entry_start:old_entry_end] = new_entry
-        return bytes(ba)
-
-    # 3. If longer, we must shift (standard UE3 expansion)
-    new_fstring = struct.pack("<i", -(len(new_bytes)//2) if is_unicode else len(new_bytes)) + new_bytes
+    # 2. Re-pack entry with exact FString length and shift UE3 offsets accordingly
+    new_fstring = struct.pack("<i", new_fstring_len) + new_bytes
     new_entry   = new_fstring + old_flags
     delta       = len(new_entry) - (old_entry_end - entry_start)
     ba[entry_start:old_entry_end] = new_entry
@@ -346,27 +413,52 @@ def patch_upk_names(data: bytes, find: str, replace: str) -> bytes:
         if val >= old_entry_end:
             _write_i32(ba, field_off, val + delta)
 
+    # Shift package summary offsets
     shift_abs(hdr["total_header_size_off"])
     shift_abs(hdr["export_offset_off"])
     shift_abs(hdr["import_offset_off"])
     shift_abs(hdr["depends_offset_off"])
+    shift_abs(53)  # ImportExportGuidsOffset
+    shift_abs(65)  # ThumbnailTableOffset
 
+    # Shift relative chunk info offset
     name_offset    = _read_i32(ba, hdr["name_offset_off"])
     chunk_info_rel = _read_i32(ba, hdr["chunk_info_off_off"])
     chunk_info_abs = name_offset + chunk_info_rel
     if chunk_info_abs >= old_entry_end:
         _write_i32(ba, hdr["chunk_info_off_off"], chunk_info_rel + delta)
+        chunk_info_abs += delta
 
-    # Shift Export Table serial offsets to ensure binary alignments of serialized data (models, assets) match
+    # Shift Export Table serial offsets to ensure binary alignments of serialized data match
     new_export_offset = _read_i32(ba, hdr["export_offset_off"])
     export_count = _read_i32(ba, hdr["export_offset_off"] - 4)
     for i in range(export_count):
         off = new_export_offset + i * 72
         if off + 72 > len(ba):
             break
+        serial_size = _read_i32(ba, off + 32)
         serial_offset = _read_i32(ba, off + 36)
-        if serial_offset >= old_entry_end:
+        if serial_size > 0 and serial_offset >= old_entry_end:
             _write_i32(ba, off + 36, serial_offset + delta)
+
+    # Shift Chunk Info Table UncompressedOffsets to keep export offsets and chunk offsets in exact sync
+    if chunk_info_abs + 4 <= len(ba):
+        chunk_count = _read_i32(ba, chunk_info_abs)
+        licensee_version = _read_u16(ba, 6)
+        chunk_entry_size = 24 if licensee_version >= 22 else 16
+        pos = chunk_info_abs + 4
+        for _ in range(chunk_count):
+            if pos + chunk_entry_size > len(ba):
+                break
+            if licensee_version >= 22:
+                u_off = struct.unpack_from("<q", ba, pos)[0]
+                if u_off >= old_entry_end:
+                    struct.pack_into("<q", ba, pos, u_off + delta)
+            else:
+                u_off = struct.unpack_from("<i", ba, pos)[0]
+                if u_off >= old_entry_end:
+                    struct.pack_into("<i", ba, pos, u_off + delta)
+            pos += chunk_entry_size
 
     return bytes(ba)
 
@@ -686,9 +778,47 @@ def get_wheel_and_mesh_names(data: bytes) -> tuple[str | None, str | None, str |
 
 
 def get_package_names_from_file(file_path: Path, aes: str | None) -> list[str]:
-    """Decrypt a UPK file temporarily and extract all its name table entries."""
+    """Extract all name table entries from a UPK file, using fast native decrypt with fallback."""
     if not file_path.exists():
         return []
+    
+    # 1. Fast path: native header decryption (~5ms)
+    try:
+        key_bytes = resolve_aes_key_bytes(aes)
+        with open(file_path, "rb") as f:
+            prefix = f.read(512)
+            if len(prefix) >= 256 and _read_u32(prefix, 0) == UPK_MAGIC:
+                hdr = _parse_full_header(prefix)
+                name_off = struct.unpack_from("<i", prefix, hdr["name_offset_off"])[0]
+                total_hdr = struct.unpack_from("<i", prefix, hdr["total_header_size_off"])[0]
+                garbage_size = struct.unpack_from("<i", prefix, hdr["chunk_info_off_off"] - 4)[0]
+                
+                enc_len = total_hdr - garbage_size - name_off
+                if enc_len > 0:
+                    aligned_len = (enc_len + 15) & ~15
+                    f.seek(name_off)
+                    enc_block = f.read(aligned_len)
+                    
+                    if len(enc_block) == aligned_len:
+                        cipher = Cipher(algorithms.AES(key_bytes), modes.ECB(), backend=default_backend())
+                        decryptor = cipher.decryptor()
+                        dec_block = decryptor.update(enc_block) + decryptor.finalize()
+                        
+                        full_hdr_data = prefix[:name_off] + dec_block[:enc_len]
+                        hdr_parsed = _parse_full_header(full_hdr_data)
+                        flags_size = _detect_flags_size(full_hdr_data, hdr_parsed)
+                        
+                        cursor = hdr_parsed["name_table_start"]
+                        names = []
+                        for _ in range(hdr_parsed["name_count"]):
+                            s, after = _parse_fstring(full_hdr_data, cursor)
+                            names.append(s)
+                            cursor = after + flags_size
+                        return names
+    except Exception:
+        pass
+
+    # 2. Fallback: full decrypt via RLUPKTool
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dec = Path(tmp) / "temp_dec.upk"

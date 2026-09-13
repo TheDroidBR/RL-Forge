@@ -4,6 +4,26 @@ All notable changes to RL Forge will be documented in this file.
 
 ---
 
+## [2.0.2] - 2026-09-13
+
+### 🐛 Bug Fixes & Engine Stability
+
+- **Fixed UE3 Memory Alignment Crash on All Swapped Items:** Deep reverse-engineering revealed that in Unreal Engine 3 Cooked SeekFree UPK packages, exports resolve payload data via `offset_in_chunk = Export.SerialOffset - Chunk.UncompressedOffset`. When name replacements changed string lengths (`delta != 0`), previous versions shifted `Export.SerialOffset` but never updated `FCompressedChunkInfo.UncompressedOffset`, displacing every object read by `delta` bytes and crashing the game immediately upon loading any swapped cosmetic. `patch_upk_names` now strictly synchronizes all table offsets, export serial offsets, and chunk table uncompressed offsets.
+- **Resolved RLUPKTool AES Padding Overwrite Bug:** Fixed a critical encryption flaw in `RLUPKTool.exe` where non-16-byte aligned encrypted blocks caused a backward seek when writing compressed chunks, overwriting the trailing bytes of the garbage table (destroying the embedded secondary UPK header `0x9E2A83C1`). RL Forge now automatically pre-aligns the uncompressed header before re-encryption, completely preventing garbage table corruption.
+- **Instant Native Package Name Extraction:** Integrated native AES-256-ECB header decryption via `cryptography`, speeding up target package inspection and dynamic chassis/material detection from ~5–10 seconds down to ~5 milliseconds.
+- **Updated Item Database:** Synced local `products.csv` database with the latest Toga-Files repository (9,295 items across 22 cosmetic categories).
+
+---
+
+## [2.0.1] - 2026-08-07
+
+### 🐛 Bug Fixes & Stability
+
+- **Initial FName & Header Adjustments:** Early adjustments to name table patching and binary table realignment.
+- **Dependency & CSV Updates:** Updated database dependencies and package handling.
+
+---
+
 ## [2.0.0] - 2026-05-24
 
 > **Complete rewrite.** Version 2.0.0 is a total refactoring of RL Forge — new architecture, new interface, new features, and radically superior performance. Users of 1.0.0 will experience a completely different product.
